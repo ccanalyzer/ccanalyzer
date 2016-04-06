@@ -1,0 +1,72 @@
+{% extends 'app_base.html' %}
+{% load staticfiles %}
+{% block body %}
+<body class="sidebar-close">
+<div id="main" class="main-wrapper">
+    <header class="topbar navbar navbar-inverse navbar-fixed-top inner">
+        <div class="container">
+            <div class="navbar-header">
+                <a href="{% url 'index' %}" class="sb-toggle-left"><i class="fa fa-tasks"></i></a>
+                <a class="navbar-brand" href="{% url 'index' %}">
+                    <strong>ccAnalyzer</strong>
+                    <span class="hidden-md hidden-lg"> - Cisco Config Analyzer</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container inner">
+        <div class="main-content">
+            {% for message in messages %}
+            {% if 'error' in message.tags or 'warning' in message.tags %}
+            <div class="alert alert-warning alert-danger">
+                <strong>{{ message }}</strong>
+            </div>
+            {% else %}
+            <div class="alert alert-success">
+                {{ message }}
+            </div>
+            {% endif %}
+            {% endfor %}
+
+            <div class="container">
+                <div class="row toolbar">
+                    <div class="col-sm-6">
+                        <div class="page-header">
+                            <h1>
+                                {% block content_page_title %}{% endblock %}
+                                <small>{% block content_page_desc %}{% endblock %}</small>
+                            </h1>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        {% block content_stat %}{% endblock %}
+                    </div>
+                </div>
+                {% block breadcrumb %}
+                <div class="row margin-bottom-15">
+                    <div class="col-md-12"></div>
+                </div>
+                {% endblock %}
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <footer class="inner">
+        <div class="footer-inner">
+            <div class="pull-right">
+                <a href="https://microsoft.com./">
+                    <i class="fa fa-fw fa-link"></i>
+                    <strong>Krusty Co.,</strong>
+                </a> 2016.
+            </div>
+        </div>
+    </footer>
+</div>
+
+<script type="text/javascript" src="{% static 'analyzer/js/main.js' %}"></script>
+
+{% block body_javascripts %}{% endblock %}
+</body>
+{% endblock %}

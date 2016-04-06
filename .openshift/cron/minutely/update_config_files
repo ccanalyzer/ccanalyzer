@@ -1,0 +1,5 @@
+#!/bin/bash --posix
+
+REPO_PATH="${OPENSHIFT_REPO_DIR}/data/repository"
+
+find ${REPO_PATH} -type f \( -iname '*.cfg' -or -iname '*.conf' -or -iname '*.config' \) -exec sed -i "1s/^\!.*$/\! touch-timestamp: $(date +%s)/" '{}' \;

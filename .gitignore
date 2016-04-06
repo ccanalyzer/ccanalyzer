@@ -1,0 +1,9 @@
+.pydevproject
+.project
+.idea
+
+*.py[cdo]
+*.sw[po]
+*.orig
+*.bak
+*~

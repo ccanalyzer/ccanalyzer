@@ -1,0 +1,277 @@
+{% extends 'layout.html' %}
+
+{% block content_page_title %}Repository File Listing{% endblock %}
+{% block content_page_desc %}
+As per repository <i class="fa fa-clock-o"></i> {% now 'Y-m-d H:i:s' %}
+{% endblock %}
+
+{% block content %}
+<div class="row" id="row_search">
+    <div class="col-md-8 col-md-offset-2">
+        <form id="form_search" method="GET" class="margin-bottom-5">
+            <div class="input-group">
+                <input name="query" class="form-control width-max pull-left no-margin text-bold"
+                       style="font-family:monospace;
+                              margin: 6px 4px 4px 0;
+                              padding: 4px 10px 4px 10px;
+                              background-color:rgba(255, 255, 255, 0.5)"
+                       placeholder="Search in Repository..." type="text">
+                    <span class="input-group-btn">
+                     <button type="submit" class="btn btn-dark-grey">
+                         <i class="fa fa-fw fa-search"></i>Search
+                     </button>
+                </span>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="row" id="row_search_message" style="display:none">
+    <div class="col-md-8 col-md-offset-2">
+        <div class="alert alert-warning margin-bottom-5 no-radius center"></div>
+    </div>
+</div>
+<div class="row" id="row_search_results" style="display:none">
+    <div class="col-md-8 col-md-offset-2">
+        <div class="panel panel-dark margin-bottom-5 no-radius">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-search"></i>
+                    Search <span class="text-bold">Results</span>
+                </h4>
+                <div class="panel-actions">
+                    <button id="button_close_row_search_results" class="btn btn-xs btn-dark-azure">
+                        <i class="fa fa-close"></i> Cancel Search
+                    </button>
+                </div>
+            </div>
+            <div class="panel-body no-padding-vertical">
+                <table id="table_search_results" class="table table-condensed">
+                    <thead>
+                    <tr>
+                        <th>Repository File</th>
+                        <th class="hidden-xs right">Size</th>
+                        <th class="hidden-xs right">Created at</th>
+                        <th class="hidden-xs right">Last Modified at</th>
+                        <th class="center" style="width:145px">
+                            <i class="fa fa-ellipsis-h"></i>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row" id="row_repository">
+    <div class="col-md-8 col-md-offset-2">
+        <div class="panel panel">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-database"></i>
+                    Current <span class="text-bold">Repository</span> Configurations
+                </h4>
+                <div class="panel-actions hidden-xs">
+                    <form class="audit-upload"
+                          action="{% url 'audit_upload' %}"
+                          method="POST" enctype="multipart/form-data">
+                        {{ audit_upload_form.config_file }}
+                        {% csrf_token %}
+                    </form>
+                </div>
+            </div>
+            <div class="panel-body no-padding-vertical">
+                <table class="table table-condensed">
+                    <thead>
+                    <tr>
+                        <th>Device Configuration File</th>
+                        <th class="hidden-xs right">File Size</th>
+                        <th class="hidden-xs right" style="width:115px">Created at</th>
+                        <th class="hidden-xs right" style="width:115px">Last Modified at</th>
+                        <th class="center" style="width:145px">
+                            <i class="fa fa-ellipsis-h"></i>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for repository_config_file in repository_config_files %}
+                    <tr>
+                        <td>{{ repository_config_file.name }}</td>
+                        <td class="hidden-xs right">{{ repository_config_file.hsize }}</td>
+                        <td class="hidden-xs right">{{ repository_config_file.ctime|date:'Y-m-d H:i' }}</td>
+                        <td class="hidden-xs right">{{ repository_config_file.mtime|date:'Y-m-d H:i' }}</td>
+                        <td class="center">
+                            <div class="btn-group">
+                                <a class="btn btn-xs btn-orange"
+                                   href="{% url 'download' %}?config={{ repository_config_file.name }}">
+                                    <i class="fa fa-download"></i>
+                                </a>
+                                <a class="btn btn-xs btn-success"
+                                   href="{% url    'audit' %}?config={{ repository_config_file.name }}">
+                                    <i class="fa fa-crosshairs"></i> Analyze File
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="100%" class="center">
+                            <strong>No Device Configuration Files at this Moment</strong>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block body_javascripts %}
+<script type="text/javascript">
+    var _url_audit    = "{% url 'audit' %}";
+    var _url_search   = "{% url 'search' %}";
+    var _url_download = "{% url 'download' %}";
+
+    var $row_repository     = $("#row_repository");
+    var $row_search_results = $("#row_search_results");
+    var $row_search_message = $("#row_search_message");
+
+    var $table_search_results       = $("#table_search_results");
+    var $table_search_results_tbody = $table_search_results.find('tbody').first();
+
+    var $div_alert_search_message = $row_search_message.find('div[class*="alert"]').first()
+
+    $(document).ready(function() {
+        $("#form_search").submit(function(e) {
+            e.preventDefault();
+
+            var $form          = $(this);
+            var $input_query   = $form.find(  'input[name="query"]').first();
+            var $button_submit = $form.find('button[type="submit"]').first();
+
+            if ($.trim($input_query.val()) == '') { return; } /* won't bother server-side */
+
+            $.ajax({
+              url: _url_search,
+              data: { query: $input_query.val() },
+              beforeSend: function() {
+                $button_submit.html('<i class="fa fa-fw fa-gear fa-spin"></i> SwaggySearch be Searching...');
+                $button_submit.attr('class', 'btn btn-dark-yellow');
+              },
+              complete: function() {
+                $button_submit.html('<i class="fa fa-fw fa-search"></i>Search');
+                $button_submit.attr('class', 'btn btn-dark-grey');
+              },
+              success: function(data) {
+                if (data.success) {
+                    if (data.results.length > 0) {
+                      $table_search_results_tbody.empty();
+                      $.each(data.results, function(i, result) {
+                        $table_search_results_tbody.append(
+                            $('<tr>')
+                                .append(
+                                    $('<td>').attr('rowspan', result.matches.length + 1).text(result.file.name))
+                                .append(
+                                    $('<td>').attr('class', 'hidden-xs right').text(result.file.hsize))
+                                .append(
+                                    $('<td>').attr('class', 'hidden-xs right').text(result.file.ctime))
+                                .append(
+                                    $('<td>').attr('class', 'hidden-xs right').text(result.file.mtime))
+                                .append(
+                                    $('<td>').attr('class', 'center').html(
+                                      '<div class="btn-group">' +
+                                          '<a class="btn btn-xs btn-orange"' +
+                                             'href="' + _url_download + '?config=' + result.file.name + '">' +
+                                              '<i class="fa fa-download"></i>' +
+                                          '</a>' +
+                                          '<a class="btn btn-xs btn-success"' +
+                                             'href="' +    _url_audit + '?config=' + result.file.name + '">' +
+                                             '<i class="fa fa-crosshairs"></i> Analyze File' +
+                                          '</a>' +
+                                        '</div>'
+                                )
+                            )
+                        );
+
+                        $.each(result.matches, function(i, match) {
+                            $table_search_results_tbody.append(
+                              $('<tr>')
+                                .append(
+                                    $('<td>')
+                                        .attr('class', 'hidden-xs right')
+                                        .html(
+                                            $('<span>')
+                                                .attr('style', 'font-family:monospace')
+                                                .attr('class', 'text-bold')
+                                                .text('+' + match.line)
+                                        ))
+                                .append(
+                                    $('<td>')
+                                        .attr('colspan', 3)
+                                        .attr('class', 'hidden-xs text-bold')
+                                        .html(
+                                            $('<span>')
+                                                .attr('style', 'font-family:monospace')
+                                                .attr('class', 'text-green')
+                                                .text(match.text)
+                                        )
+                                )
+                            );
+                        });
+                      });
+
+                      $row_search_message.hide();
+                      $row_repository.fadeOut(480, function() {
+                        $row_search_results.fadeIn(720);
+                      });
+                    } else {
+                      $div_alert_search_message
+                          .html('The search query did not return any Results from server-side...');
+                      $row_search_message.show();
+                      $row_search_results.hide();
+                      $row_repository.show();
+                    }
+                } else {
+                    if (data.message.length > 0) {
+                      $div_alert_search_message.text('There was a problem when searching: ' + data.message);
+                    } else {
+                      $div_alert_search_message.text('There was a problem when searching...');
+                    }
+
+                    $row_search_message.show();
+                    $row_search_results.hide();
+                    $row_repository.show();
+                }
+              },
+              error: function() {
+                $div_alert_search_message
+                    .html('There was an Error when running the AJAX Search Request. Try later...');
+                $row_search_message.show();
+                $row_search_results.hide();
+                $row_repository.show();
+              }
+            });
+        });
+
+        $("form.audit-upload > input[type=file]").change(function() {
+          $(this).closest('form').submit();
+        });
+
+        $("#button_close_row_search_results").click(function(e) {
+          $row_search_results.fadeOut(480, function() {
+              $row_repository.fadeIn(320);
+          });
+        });
+    });
+</script>
+
+<!-- no javascript? no upload >.<' -->
+<noscript id="no_js_hide_file_upload">
+    <style type="text/css">
+        form.audit-upload { display: none; }
+    </style>
+</noscript>
+{% endblock %}

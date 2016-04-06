@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {% load staticfiles %}
+    <meta charset="utf-8"/>
+    <title>ccAnalyzer | PoC</title>
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+
+    <link rel="icon" type="image/x-icon" href="{% static 'analyzer/favicon.ico' %}"/>
+
+    <link rel="stylesheet" type="text/css" href="{% static 'analyzer/plugins/font-awesome/css/font-awesome.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'analyzer/plugins/bootstrap/css/bootstrap.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'analyzer/css/main.css' %}">
+    {% block stylesheets %}{% endblock %}
+
+    <script type="text/javascript" src="{% static 'analyzer/plugins/jquery/jquery-2.1.1.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'analyzer/plugins/bootstrap/js/bootstrap.min.js' %}"></script>
+    {% block javascripts %}{% endblock %}
+</head>
+{% block body %}{% endblock %}
+</html>

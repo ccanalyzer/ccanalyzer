@@ -1,0 +1,494 @@
+{% extends 'layout.html' %}
+
+{% block content_page_title %}Analysis of {{ report.config_name }}{% endblock %}
+{% block content_page_desc %}
+Report Generated <i class="fa fa-clock-o"></i> {% now 'Y-m-d H:i:s' %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 col-md-offset-2">
+        <div class="tabbable">
+            <ul class="nav nav-tabs">
+                <li class="active">
+                    <a data-toggle="tab" href="#tab-summary">
+                        <i class="fa fa-tags"></i> Summary
+                    </a>
+                </li>
+                <li>
+                    <a data-toggle="tab" href="#tab-accounts">
+                        <i class="fa fa-users"></i> Accounts
+                    </a>
+                </li>
+                <li>
+                    <a data-toggle="tab" href="#tab-snmp-and-log">
+                        <i class="fa fa-sitemap"></i> SNMP & Log
+                    </a>
+                </li>
+                <li>
+                    <a data-toggle="tab" href="#tab-acls">
+                        <i class="fa fa-sort-numeric-asc"></i> ACLs
+                    </a>
+                </li>
+                <li>
+                    <a data-toggle="tab" href="#tab-remote-access">
+                        <i class="fa fa-unlock-alt"></i> Remote
+                    </a>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane fade in active" id="tab-summary">
+                    <dl class="dl-horizontal no-margin-bottom">
+                        <dt>Configuration Name</dt>
+                        <dd>{{ report.config_name }}</dd>
+                        <dt>Report Timestamp</dt>
+                        <dd>{% now 'Y-m-d H:i:s e' %}</dd>
+                        <dt>File SHA1 Digest</dt>
+                        <dd>{{ report.config_hash }}</dd>
+                    </dl>
+
+                    <table class="table table-condensed">
+                        <thead>
+                        <tr>
+                            <th colspan="100%" class="center">Configuration Check - Summary</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- here comes dem' checks! -->
+                        <tr>
+                            <td class="right">Does the device have a custom Hostname?</td>
+                            <td class="center">
+                                {% if report.device_hostname %}
+                                <span class="label label-success">PASS</span>
+                                {% else %}
+                                <span class="label label-warning">WARN</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="right">Is there any account in the local user database?</td>
+                            <td class="center">
+                                {% if report.device_accounts %}
+                                <span class="label label-success">PASS</span>
+                                {% else %}
+                                <span class="label label-warning">WARN</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if report.device_accounts %}
+                        <tr>
+                            <td class="right">Are all accounts using a secure, encrypted password?</td>
+                            <td class="center">
+                                {% if report.are_all_local_passwd_encrypted %}
+                                <span class="label label-success">PASS</span>
+                                {% else %}
+                                <span class="label label-danger">OOPS</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <td class="right">Does the device provide a Secure Shell (SSH) Daemon?</td>
+                            <td class="center">
+                                {% if report.device_ssh_conf.enabled %}
+                                <span class="label label-success">PASS</span>
+                                {% else %}
+                                <span class="label label-warning">WARN</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if report.device_ssh_conf.enabled %}
+                        <tr>
+                            <td class="right">Does the SSH Daemon use the secure SSHv2 protocol?</td>
+                            <td class="center">
+                                {% if report.device_ssh_conf.version == 2 %}
+                                <span class="label label-success">PASS</span>
+                                {% else %}
+                                <span class="label label-danger">OOPS</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <td class="right">Does the device have a Centralized Log Server configured?</td>
+                            <td class="center">
+                                {% if report.device_logging_hosts %}
+                                <span class="label label-success">PASS</span>
+                                {% else %}
+                                <span class="label label-warning">WARN</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="right">Does the device join to a SNMP Community?</td>
+                            <td class="center">
+                                {% if report.device_snmp_server_communities %}
+                                <span class="label label-success">PASS</span>
+                                {% else %}
+                                <span class="label label-warning">WARN</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="right">Does the device have an NTP sync'd Clock?</td>
+                            <td class="center">
+                                {% if report.device_ntp_server_conf.address %}
+                                <span class="label label-success">PASS</span>
+                                {% else %}
+                                <span class="label label-warning">WARN</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="right">Is there a RADIUS source-port range specified?</td>
+                            <td class="center">
+                                {% if report.device_radius_server_source_ports %}
+                                <span class="label label-success">PASS</span>
+                                {% else %}
+                                <span class="label label-warning">WARN</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="right">Do all VTY lines [in range] use specific inputs?</td>
+                            <td class="center">
+                                {% if report.device_line_vty_ranges %}
+                                {% if report.are_all_line_vty_ranges_specific %}
+                                <span class="label label-success">PASS</span>
+                                {% else %}
+                                <span class="label label-danger">OOPS</span>
+                                {% endif %}
+                                {% else %}
+                                <span class="label label-warning">WARN</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="tab-pane fade" id="tab-accounts">
+                    <table class="table table-condensed">
+                        <thead>
+                        <tr>
+                            <th>Account Name</th>
+                            <th>Privilege</th>
+                            <th class="right">Hash Type</th>
+                            <th>Hash</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for account in report.device_accounts %}
+                        <tr {% if 'encrypted' in account.hash_type or '7' in account.hash_type %}class="warning"{% endif %}>
+                        <td><strong>{{ account.name }}</strong></td>
+                        <td>
+                            {% if account.privilege %}
+                            {{ account.privilege }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td class="right">
+                            {% if account.hash_type %}
+                            {{ account.hash_type }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if account.hash %}
+                            <code>{{ account.hash }}</code>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="100%" class="center">
+                                <strong>Not a single Account was found during the Analysis</strong>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="tab-pane fade" id="tab-snmp-and-log">
+                    <dl class="dl-horizontal">
+                        <dt>SNMP Communities Found:</dt>
+                        {% for snmp_server_community in report.device_snmp_server_communities %}
+                        <dd>
+                            {{ snmp_server_community.name }}
+                            {% if snmp_server_community.mode %}
+                            <strong class="text-darkcyan">
+                                ({{ snmp_server_community.mode }})
+                            </strong>
+                            {% endif %}
+                        </dd>
+                        {% empty %}
+                        <dd>-</dd>
+                        {% endfor %}
+                    </dl>
+                    <dl class="dl-horizontal">
+                        <dt>Centralized Log Server(s)</dt>
+                        {% for logging_host in report.device_logging_hosts %}
+                        <dd>{{ logging_host }}</dd>
+                        {% empty %}
+                        <dd>-</dd>
+                        {% endfor %}
+                    </dl>
+                    <dl class="dl-horizontal no-margin-bottom">
+                        <dt>NTP Server Address</dt>
+                        <dd>
+                            {% if report.device_ntp_server_conf.address %}
+                            {{ report.device_ntp_server_conf.address }}
+                            {% if report.device_ntp_server_conf.version %}
+                            - NTPv{{ report.device_ntp_server_conf.version }}
+                            {% endif %}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+                <div class="tab-pane fade" id="tab-acls">
+                    <table class="table table-condensed">
+                        <thead>
+                        <tr>
+                            <th colspan="100%" class="right">Standard ACLs (range 1-99, 1300-1999)</th>
+                        </tr>
+                        <tr>
+                            <th>Number</th>
+                            <th>ACL Action</th>
+                            <th>ACL Verbatim</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for standard_acl in report.device_standard_acls %}
+                        <tr>
+                            <td>{{ standard_acl.number }}</td>
+                            <td>
+                                <strong>{{ standard_acl.action }}</strong>
+                            </td>
+                            <td>
+                                {% if standard_acl.action == 'permit' %}
+                                <span class="text-darkcyan">{{ standard_acl.text }}</span>
+                                {% else %}
+                                <span class="text-bricky">{{ standard_acl.text }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="100%" class="center">
+                                <strong>Not a single standard ACL was found during the Analysis</strong>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                    <table class="table table-condensed">
+                        <thead>
+                        <tr>
+                            <th colspan="100%" class="right">Extended ACLs (range 100-199, 2000-2699)</th>
+                        </tr>
+                        <tr>
+                            <th>Number</th>
+                            <th>ACL Action</th>
+                            <th>ACL Verbatim</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for extended_acl in report.device_extended_acls %}
+                        <tr>
+                            <td>{{ extended_acl.number }}</td>
+                            <td>
+                                <strong>{{ extended_acl.action }}</strong>
+                            </td>
+                            <td>
+                                {% if extended_acl.action == 'permit' %}
+                                <span class="text-darkcyan">{{ extended_acl.text }}</span>
+                                {% else %}
+                                <span class="text-bricky">{{ extended_acl.text }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="100%" class="center">
+                                <strong>Not a single extended ACL was found during the Analysis</strong>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="tab-pane fade" id="tab-remote-access">
+                    <dl class="dl-horizontal no-margin-bottom">
+                        <dt>Is SSHd Explicitly Enabled?</dt>
+                        <dd>
+                            {% if report.device_ssh_conf %}
+                            {% if report.device_ssh_conf.enabled %}Yes{% else %}No{% endif %}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </dd>
+                        <dt>RADIUS Source-Port Range</dt>
+                        <dd>
+                            {% if report.device_radius_server_source_ports %}
+                            {{ report.device_radius_server_source_ports.start }} to
+                            {{ report.device_radius_server_source_ports.end }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </dd>
+                    </dl>
+
+                    <table class="table table-condensed">
+                        <thead>
+                        <tr>
+                            <th colspan="100%" class="center">VTY Lines in Range (e.g. line vty 0 4)</th>
+                        </tr>
+                        <tr>
+                            <th class="center">VTY start</th>
+                            <th class="center">VTY end</th>
+                            <th class="center">telnet?</th>
+                            <th class="center">SSH?</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for line_vty_range in report.device_line_vty_ranges %}
+                        <tr>
+                            <td class="center">{{ line_vty_range.vty_start }}</td>
+                            <td class="center">{{ line_vty_range.vty_end }}</td>
+                            <td class="center">
+                                {% if 'telnet' in line_vty_range.transport_inputs or 'all' in line_vty_range.transport_inputs %}
+                                <span class="text-darkcyan"><i class="fa fa-check-circle-o"></i></span>
+                                {% else %}
+                                <span class="text-orange"><i class="fa fa-circle-o"></i></span>
+                                {% endif %}
+                            </td>
+                            <td class="center">
+                                {% if 'ssh' in line_vty_range.transport_inputs or 'all' in line_vty_range.transport_inputs %}
+                                <span class="text-darkcyan"><i class="fa fa-check-circle-o"></i></span>
+                                {% else %}
+                                <span class="text-orange"><i class="fa fa-circle-o"></i></span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="100%" class="center">
+                                <strong>No VTY lines found (in the form of line vty 0 N)</strong>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 col-md-offset-2">
+        <div class="panel panel">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-info-circle"></i>
+                    Analysis <span class="text-bold">Log Entries</span>
+                </h4>
+                <div class="panel-actions">
+                    <a href="javascript:window.print()" class="btn btn-xs btn-purple">
+                        <i class="fa fa-fw fa-print"></i> Print this Report
+                    </a>
+                </div>
+            </div>
+            <div class="panel-body">
+                <table class="table table-condensed">
+                    <thead>
+                    <tr>
+                        <th class="right">Message Severity</th>
+                        <th>Message Description</th>
+                        <th class="center">
+                            Reference Links
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for log_entry in report.log_entries %}
+                    <tr>
+                        <td class="right">
+                            {% if   log_entry.severity == 'info' %}
+                            <span class="label label-success">
+                                <i class="fa fa-fw fa-info-circle"></i>
+                                Informative Entry
+                            </span>
+                            {% elif log_entry.severity == 'warn' %}
+                            <span class="label label-orange">
+                                <i class="fa fa-fw fa-question-circle"></i>
+                                Suspicious Entry
+                            </span>
+                            {% elif log_entry.severity == 'oops' %}
+                            <span class="label label-danger">
+                                <i class="fa fa-fw fa-exclamation-triangle"></i>
+                                Dangerous! Entry
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td {% if log_entry.text %}title="{{ log_entry.text }}"{% endif %}>
+                            {{ log_entry.message }}
+                        </td>
+                        <td class="center">
+                            {% if log_entry.links %}
+                            <ul class="no-bullets">
+                                {% for link in log_entry.links %}
+                                <li>
+                                    <a href="{{ link.href }}" target="_blank">
+                                        {{ link.name }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="100%" class="center">
+                            <strong>No Analytical Entries were generated in this Report</strong>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 col-md-offset-2">
+        <div class="panel panel">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <i class="fa fa-code"></i>
+                    Configuration <span class="text-bold">Source</span>
+                </h4>
+                {% if report.is_src_repo %}
+                <div class="panel-actions">
+                    <a href="{% url 'download' %}?config={{ report.config_name }}" class="btn btn-xs btn-dark-azure">
+                        <i class="fa fa-cloud-download"></i> Download Config
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="panel-body no-padding-vertical">
+                <p>The following Configuration Source was used by the Report Generator:</p>
+                <pre><code data-language="text/plain">{{ report.config_text }}</code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
